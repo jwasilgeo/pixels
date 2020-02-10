@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Pixels</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/view.css">
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    .off {
+      display: none;
+    }
+
+    #topbar {
+      background: #fff;
+      padding: 10px;
+      /* width: 320px; */
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .action-button {
+      font-size: 16px;
+      background-color: transparent;
+      border: 1px solid #D3D3D3;
+      color: #6e6e6e;
+      height: 32px;
+      width: 32px;
+      text-align: center;
+      box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-button:hover,
+    .action-button:focus {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
+
+    .active {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
+
+    #endmember-list input {
+      width: 70%;
+      margin: 0 0 5px 0;
+      padding: 2px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="viewDiv">
+    <div id="topbar" class="off esri-component esri-widget esri-widget--panel">
+      <div>
+        <button class="action-button esri-icon-polygon" id="polygonButton" type="button" title="Draw polygon"></button>
+        <button class="action-button esri-icon-trash" id="resetButton" type="button" title="Clear graphics"></button>
+        <span style="margin-left: 10px;">Draw endmembers</span>
+      </div>
+
+      <div id="endmember-list"></div>
+    </div>
+  </div>
+
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://js.arcgis.com/4.9"></script>
+  <!-- <script src="https://unpkg.com/vectorious@4.8.2/dist/vectorious.min.js"></script> -->
+  <script src="script.js"></script>
+</body>
+
+</html>

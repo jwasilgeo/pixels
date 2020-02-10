@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Landsat 8 Pixels: Esri JSAPI and Plotly Charting</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
+  <link rel="stylesheet" href="https://unpkg.com/loaders.css@0.1.2/loaders.min.css">
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    body,
+    select {
+      font-family: "Avenir Next W01", "Avenir Next W00", "Avenir Next", "Avenir", "Helvetica Neue", sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    select {
+      font-size: 14px;
+    }
+
+    label {
+      margin: 10px 5px;
+      font-size: 14px;
+    }
+
+    .flex {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      height: 700px;
+    }
+
+    #viewDiv {
+      width: 48%;
+      max-width: 600px;
+      height: 100%;
+      max-height: 600px;
+      outline: 2px solid steelblue;
+    }
+
+    #chartWrapper {
+      width: 48%;
+      max-width: 450px;
+      /* height: 450px; */
+      outline: 2px solid steelblue;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+    }
+
+    #chartDiv {
+      width: 100%;
+      max-width: 425px;
+      height: 425px;
+    }
+
+    #status {
+      opacity: 1;
+      transition: opacity 500ms;
+      text-align: center;
+    }
+
+    #status .line-scale-pulse-out {
+      transform: scale(0.65, 0.65);
+    }
+
+    #status .line-scale-pulse-out>div {
+      background-color: steelblue;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Landsat 8 Pixels: Esri JSAPI and Plotly Charting</h1>
+
+  <div class="flex">
+    <div id="viewDiv"></div>
+  
+    <div id="chartWrapper">
+      <div id="chartDiv"></div>
+  
+      <div id="status">
+        <div class="line-scale-pulse-out">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+  
+      <div>
+        <label>
+          Red
+          <select id="redBandSelect"></select>
+        </label>
+  
+        <label>
+          Green
+          <select id="greenBandSelect"></select>
+        </label>
+  
+        <label>
+          Blue
+          <select id="blueBandSelect"></select>
+        </label>
+      </div>
+  
+      <label>
+        Chart Type
+        <select id="chartTypeSelect">
+          <option value="histogram">Histograms</option>
+          <option value="scatter3d" selected>3D Scatterplot</option>
+          <option value="mesh3d-delaunay">3D Mesh (Delaunay Triangulation)</option>
+          <option value="mesh3d-convex">3D Mesh (Convex-hull)</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://js.arcgis.com/4.14/"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>

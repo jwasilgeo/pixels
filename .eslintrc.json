@@ -1,0 +1,28 @@
+{
+  "env": {
+    "browser": true,
+    "commonjs": false,
+    "es6": false,
+    "node": false
+  },
+  "rules": {
+    "no-const-assign": "warn",
+    "no-this-before-super": "warn",
+    "no-undef": "warn",
+    "no-unreachable": "warn",
+    "no-unused-vars": "warn",
+    "constructor-super": "warn",
+    "valid-typeof": "warn",
+    "no-console": "warn",
+    "semi": "warn",
+    "quotes": ["warn", "single"],
+    "no-trailing-spaces": "warn"
+  },
+  "globals": {
+    "d3": false,
+    "require": false,
+    "Vector": false,
+    "Matrix": false,
+    "tf": false
+  }
+}
