@@ -20,6 +20,7 @@
   },
   "globals": {
     "d3": false,
+    "Plotly": false,
     "require": false,
     "Vector": false,
     "Matrix": false,

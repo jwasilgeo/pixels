@@ -21,13 +21,13 @@ require([
 
   // Set the rendering rule to the 'None' raster function.
   // This will allow us to gain access to the raw values assigned to each pixel.
-  var rasterFunctionNone = new RasterFunction({
-    functionName: 'None',
-    // functionName: 'ExtractBand',
-    // functionArguments: {
-    //   'BandIDs': [0, 7, 14]
-    // }
-  });
+  // var rasterFunctionNone = new RasterFunction({
+  //   functionName: 'None',
+  //   // functionName: 'ExtractBand',
+  //   // functionArguments: {
+  //   //   'BandIDs': [0, 7, 14]
+  //   // }
+  // });
 
   function createExtractAndStretchRasterFunction(bandsRGB) {
     // https://developers.arcgis.com/documentation/common-data-types/raster-function-objects.htm#ESRI_SECTION1_7545363F0B8A4B7B931A54B3C4189D9D
@@ -87,6 +87,10 @@ require([
       //   colors.push('rgb(' + r + ',' + g + ',' + b + ')');
       // }
 
+      // TODO: reduce sheer number of total observations for non-histograms chart types
+      // - maybe only push once for the same R,G,B combo (turns out "if" + "colors.indexOf" is slow!)
+      // - maybe research a 3D binning technique
+
       bandX.push(r);
       bandY.push(g);
       bandZ.push(b);
@@ -118,7 +122,7 @@ require([
           x: bandX,
           type: 'histogram',
           name: 'Red (' + redBandSelectNode.options[redBandSelectNode.selectedIndex].text + ')',
-          opacity: 0.666,
+          opacity: 0.55,
           marker: {
             color: 'red',
           }
@@ -127,7 +131,7 @@ require([
           x: bandY,
           type: 'histogram',
           name: 'Green (' + greenBandSelectNode.options[greenBandSelectNode.selectedIndex].text + ')',
-          opacity: 0.666,
+          opacity: 0.55,
           marker: {
             color: 'green',
           }
@@ -136,7 +140,7 @@ require([
           x: bandZ,
           type: 'histogram',
           name: 'Blue (' + blueBandSelectNode.options[blueBandSelectNode.selectedIndex].text + ')',
-          opacity: 0.666,
+          opacity: 0.55,
           marker: {
             color: 'blue',
           }
@@ -270,21 +274,21 @@ require([
       redOption.value = index;
       // JSAPI raster bands start at index 0,
       // and we want to display the optiont text starting with "Band 0"
-      redOption.text = 'Band ' + index;
+      redOption.text = 'Band ' + (index + 1);
       redBandSelectNode.add(redOption);
 
       var greenOption = document.createElement('option');
       greenOption.value = index;
       // JSAPI raster bands start at index 0,
       // and we want to display the optiont text starting with "Band 0"
-      greenOption.text = 'Band ' + index;
+      greenOption.text = 'Band ' + (index + 1);
       greenBandSelectNode.add(greenOption);
 
       var blueOption = document.createElement('option');
       blueOption.value = index;
       // JSAPI raster bands start at index 0,
       // and we want to display the optiont text starting with "Band 0"
-      blueOption.text = 'Band ' + index;
+      blueOption.text = 'Band ' + (index + 1);
       blueBandSelectNode.add(blueOption);
     }
 
@@ -342,6 +346,48 @@ require([
   var redBandSelectNode = document.querySelector('#redBandSelect');
   var greenBandSelectNode = document.querySelector('#greenBandSelect');
   var blueBandSelectNode = document.querySelector('#blueBandSelect');
+
+  document.querySelector('#trueColorButton').addEventListener('click', function () {
+    redBandSelectNode.selectedIndex = 3;
+    greenBandSelectNode.selectedIndex = 2;
+    blueBandSelectNode.selectedIndex = 1;
+
+    layer.renderingRule = createExtractAndStretchRasterFunction(
+      [
+        Number(redBandSelectNode.value),
+        Number(greenBandSelectNode.value),
+        Number(blueBandSelectNode.value)
+      ]
+    );
+  });
+
+  document.querySelector('#nirButton').addEventListener('click', function () {
+    redBandSelectNode.selectedIndex = 4;
+    greenBandSelectNode.selectedIndex = 3;
+    blueBandSelectNode.selectedIndex = 2;
+
+    layer.renderingRule = createExtractAndStretchRasterFunction(
+      [
+        Number(redBandSelectNode.value),
+        Number(greenBandSelectNode.value),
+        Number(blueBandSelectNode.value)
+      ]
+    );
+  });
+
+  document.querySelector('#urbanButton').addEventListener('click', function () {
+    redBandSelectNode.selectedIndex = 6;
+    greenBandSelectNode.selectedIndex = 5;
+    blueBandSelectNode.selectedIndex = 3;
+
+    layer.renderingRule = createExtractAndStretchRasterFunction(
+      [
+        Number(redBandSelectNode.value),
+        Number(greenBandSelectNode.value),
+        Number(blueBandSelectNode.value)
+      ]
+    );
+  });
 
   var chartTypeSelectNode = document.querySelector('#chartTypeSelect');
   var chartType = chartTypeSelectNode.value;
