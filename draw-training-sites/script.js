@@ -108,7 +108,7 @@ require([
         view: view,
         polygonSymbol: {
           type: 'simple-fill',
-          color: 'rgba(138,43,226, 0.2)',
+          color: 'rgba(138,43,226, 0.333)',
           style: 'solid',
           outline: {
             color: 'white',
@@ -130,18 +130,18 @@ require([
         createNewEndmemberNode(drawnPolygonGraphic);
       });
 
-      document.querySelector('#polygonButton').onclick = function() {
+      document.querySelector('#polygonButton').addEventListener('click', function() {
         // set the sketch to create a polygon geometry
         sketchViewModel.create('polygon');
         setActiveButton(this);
-      };
+      });
 
-      document.querySelector('#resetButton').onclick = function() {
+      document.querySelector('#resetButton').addEventListener('click', function() {
         drawGraphicsLayer.removeAll();
         sketchViewModel.reset();
         setActiveButton();
         domConstruct.empty(document.querySelector('#endmember-list'));
-      };
+      });
     }
 
     function setActiveButton(selectedButton) {
@@ -260,8 +260,9 @@ require([
         .domain([0, 100]);
 
       var scaledApparentReflectanceConversion = d3.scaleLinear()
+        // TODO: is this output range appropriate?
         .range([0, 100])
-        // TODO: assign landsat service min/max values to this domain (used to be 5000, 55000)
+        // assign landsat service min/max values to this domain
         .domain([0, 10000]);
 
       var lineGenerator = d3.line()
@@ -292,130 +293,6 @@ require([
         g: g,
         lineGenerator: lineGenerator
       };
-    }
-
-    function unmix(pixelData) {
-      if (pixelData === null || pixelData.pixelBlock === null ||
-        pixelData.pixelBlock.pixels === null) {
-        return;
-      }
-
-      // var endmemberSignatureInfo = {};
-      var signatures = [];
-      document.querySelectorAll('#endmember-list div').forEach(function(element) {
-        var arrayFromJson = JSON.parse(element.dataset.signatures);
-        // endmemberSignatureInfo[element.dataset.endmemberName] = new Matrix([arrayFromJson]);
-        signatures.push(arrayFromJson);
-      });
-
-      // convert input endmember signature means into arrays of each endmember across bands
-      // [[vegB, vegG, vegR, ...], [shadowB, shadowG, shadowR, ...], [...]]
-
-      // and then transpose signature axes into arrays of each band's endmembers
-      // [[vegB, shadowB, npvB, ...], [vegG, shadowG, npvG, ...], [...]]
-
-      // matrix of shape [7, nEndmemberSignatureMeans]
-      var coefficients = new Matrix(signatures).T;
-
-      // no need for panchromatic band at band position 8
-      // matrix of shape [7, pixelObservations]
-      var pixelMatrix = new Matrix(pixelData.pixelBlock.pixels.slice(0, 7));
-
-      // transpose raster array axes into arrays of band values per pixel,
-      // [B, G, R, NIR1, SWIR1, SWIR2] at each pixel
-      // inBlockT = inBlock.transpose([1, 2, 0])
-
-      // reshape to slightly flatten to 2d array,
-      // and pixel stacks to solve must be transposed to(M, K) matrix of K columns
-      // y = inBlockT.reshape(-1, inBlockT.shape[-1]).T
-
-      debugger;
-
-      // pixelMatrix.solve(endmemberMatrixStuff...)
-
-      // Set the new pixel values on the pixelBlock
-      // pixelData.pixelBlock.pixels = pixelData.pixelBlock.pixels.slice(1, 4);
-      // pixelData.pixelBlock.pixels = [rBand, gBand, bBand];
-      // pixelData.pixelBlock.pixelType = 'U8'; // U8 is used for color
-      // pixelData.pixelBlock.pixelType = 'F4'; // F4 was used in PRF
-
-      return;
-
-
-
-      // Create some representative endmembers computed previously by sampling
-      // the Landsat 5 mosaic.
-      var urbanEndmember = [88, 42, 48, 38, 86, 115, 59];
-      var vegEndmember = [50, 21, 20, 35, 50, 110, 23];
-      var waterEndmember = [51, 20, 14, 9, 7, 116, 4];
-
-      // Compute the 3x7 pseudo inverse.
-      var endmembers = ee.Array([urbanEndmember, vegEndmember, waterEndmember]);
-      var inverse = ee.Image(endmembers.matrixPseudoInverse().transpose());
-
-      // Convert the bands to a 2D 7x1 array. The toArray() call concatenates
-      // pixels from each band along the default axis 0 into a 1D vector per
-      // pixel, and the toArray(1) call concatenates each band (in this case
-      // just the one band of 1D vectors) along axis 1, forming a 2D array.
-      var inputValues = allBandMosaic.toArray().toArray(1);
-
-      // Matrix multiply the pseudo inverse of the endmembers by the pixels to
-      // get a 3x1 set of endmembers fractions from 0 to 1.
-      var unmixed = inverse.matrixMultiply(inputValues);
-
-      // Create and show a colored image of the endmember fractions. Since we know
-      // the result has size 3x1, project down to 1D vectors at each pixel (since the
-      // second axis is pointless now), and then flatten back to a regular scalar
-      // image.
-      var colored = unmixed
-        .arrayProject([0])
-        .arrayFlatten([['urban', 'veg', 'water']]);
-
-
-
-
-      // The pixelBlock stores the values of all pixels visible in the view
-      var pixelBlock = pixelData.pixelBlock;
-
-      // Get the min and max values of the data in the current view
-      var minValue = pixelBlock.statistics[0].minValue;
-      var maxValue = pixelBlock.statistics[0].maxValue;
-
-      // The pixels visible in the view
-      var pixels = pixelBlock.pixels;
-
-      // The number of pixels in the pixelBlock
-      var numPixels = pixelBlock.width * pixelBlock.height;
-
-      // Calculate the factor by which to determine the red and blue
-      // values in the unmixd version of the layer
-      var factor = 255.0 / (maxValue - minValue);
-
-      // Get the pixels containing temperature values in the only band of the data
-      var tempBand = pixels[0];
-
-      // Create empty arrays for each of the RGB bands to set on the pixelBlock
-      var rBand = [];
-      var gBand = [];
-      var bBand = [];
-
-      // Loop through all the pixels in the view
-      var i;
-      for (i = 0; i < numPixels; i++) {
-        // Get the pixel value (the temperature) recorded at the pixel location
-        var tempValue = tempBand[i];
-        // Calculate the red value based on the factor
-        var red = (tempValue - minValue) * factor;
-
-        // Sets a color between blue (coldest) and red (warmest) in each band
-        rBand[i] = red;
-        gBand[i] = 0;
-        bBand[i] = 255 - red;
-      }
-
-      // Set the new pixel values on the pixelBlock
-      pixelData.pixelBlock.pixels = [rBand, gBand, bBand];
-      pixelData.pixelBlock.pixelType = 'U8'; // U8 is used for color
     }
 
   });
