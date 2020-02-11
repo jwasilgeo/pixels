@@ -61,31 +61,31 @@ require([
     //   }
     // })
 
-    analysisLayer = new ImageryLayer({
-      // url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat/MS/ImageServer',
-      url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat8_Views/ImageServer',
-      title: 'Landsat 8 — analysis',
-      format: 'lerc',
-      pixelFilter: unmix,
-      renderingRule: new RasterFunction({
-        functionName: 'None'
-      }),
-      // mosaicRule: new MosaicRule({
-      //   multidimensionalDefinition: [new DimensionalDefinition({
-      //     dimensionName: 'StdTime', // time temp was recorded
-      //     values: [1396828800000], // Week of April 7, 2014
-      //     isSlice: true
-      //   })]
-      // }),
-      visible: false
-    });
+    // analysisLayer = new ImageryLayer({
+    //   // url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat/MS/ImageServer',
+    //   url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat8_Views/ImageServer',
+    //   title: 'Landsat 8 — analysis',
+    //   format: 'lerc',
+    //   pixelFilter: unmix,
+    //   renderingRule: new RasterFunction({
+    //     functionName: 'None'
+    //   }),
+    //   // mosaicRule: new MosaicRule({
+    //   //   multidimensionalDefinition: [new DimensionalDefinition({
+    //   //     dimensionName: 'StdTime', // time temp was recorded
+    //   //     values: [1396828800000], // Week of April 7, 2014
+    //   //     isSlice: true
+    //   //   })]
+    //   // }),
+    //   visible: false
+    // });
 
     var drawGraphicsLayer = new GraphicsLayer({
       listMode: 'hide'
     });
 
     view.map.add(visualLayer);
-    view.map.add(analysisLayer);
+    // view.map.add(analysisLayer);
     view.map.add(drawGraphicsLayer);
 
     function setupViewComponents() {
@@ -96,25 +96,25 @@ require([
       document.querySelector('#topbar').classList.remove('off');
 
       // add a LayerList widget
-      view.ui.add(new LayerList({
-        view: view
-      }), {
-          position: 'top-right'
-        }
-      );
+      // view.ui.add(new LayerList({
+      //   view: view
+      // }), {
+      //     position: 'top-right'
+      //   }
+      // );
 
       // create a new sketch view model
       var sketchViewModel = new SketchViewModel({
         view: view,
-        // polygonSymbol: {
-        //   type: 'simple-fill',
-        //   color: 'rgba(138,43,226, 0.2)',
-        //   style: 'solid',
-        //   outline: {
-        //     color: 'white',
-        //     width: 1
-        //   }
-        // }
+        polygonSymbol: {
+          type: 'simple-fill',
+          color: 'rgba(138,43,226, 0.2)',
+          style: 'solid',
+          outline: {
+            color: 'white',
+            width: 1
+          }
+        }
       });
 
       sketchViewModel.on('create-complete', function(evt) {
@@ -181,7 +181,7 @@ require([
       var lineGraphViz = generateLineGraph(endmember);
 
       // get and store the sampled pixels within the drawn polygon
-      esriRequest(analysisLayer.url + '/getSamples', {
+      esriRequest(visualLayer.url + '/getSamples', {
         responseType: 'json',
         method: 'post',
         query: {
@@ -191,7 +191,8 @@ require([
         }
       }).then(function(response) {
         var tallys = [];
-        var maxBandIndex = analysisLayer.bandCount - 1; // minus 1 because we don't want panchromatic at band position 8
+        // var maxBandIndex = visualLayer.bandCount - 1; // minus 1 because we don't want panchromatic at band position 8
+        var maxBandIndex = 7; // https://www.esri.com/arcgis-blog/products/product/imagery/band-combinations-for-landsat-8/
         for (var i = 0; i < maxBandIndex; i++) {
           tallys.push(0);
         }
