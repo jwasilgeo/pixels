@@ -30,16 +30,19 @@
       font-size: 14px;
     }
 
-    label, button {
+    label,
+    button {
       margin: 10px 5px;
       font-size: 14px;
     }
 
-    .flex {
+    main {
       display: flex;
       justify-content: space-evenly;
       align-items: center;
-      height: 700px;
+      height: calc(100vh - 90px - 30px);
+      width: 90%;
+      margin: 0 auto;
     }
 
     #viewDiv {
@@ -48,23 +51,40 @@
       height: 100%;
       max-height: 600px;
       outline: 2px solid steelblue;
+
+      /* https://neumorphism.io */
+      background: #fff;
+      box-shadow: 10px 10px 20px #cacaca,
+        -10px -10px 20px #ffffff;
     }
 
     #chartWrapper {
       width: 48%;
-      max-width: 450px;
-      /* height: 450px; */
+      max-width: 600px;
+      height: 100%;
+      max-height: 600px;
       outline: 2px solid steelblue;
+
+      /* https://neumorphism.io */
+      background: #fff;
+      box-shadow: 10px 10px 20px #cacaca,
+        -10px -10px 20px #ffffff;
+
       display: flex;
       flex-direction: column;
       align-items: center;
-
     }
 
     #chartDiv {
       width: 100%;
-      max-width: 425px;
       height: 425px;
+    }
+
+    #countInfo {
+      font-size: 0.8rem;
+      font-style: italic;
+      margin: 4px 0;
+      min-height: 15px;
     }
 
     #status {
@@ -80,18 +100,25 @@
     #status .line-scale-pulse-out>div {
       background-color: steelblue;
     }
+
+    footer {
+      text-align: right;
+      margin: 8px 15px 0 15px;
+    }
   </style>
 </head>
 
 <body>
   <h1>Landsat 8 Pixels: Esri JSAPI and Plotly Charting</h1>
 
-  <div class="flex">
+  <main class="flex">
     <div id="viewDiv"></div>
-  
+
     <div id="chartWrapper">
       <div id="chartDiv"></div>
-  
+
+      <div id="countInfo"></div>
+
       <div id="status">
         <div class="line-scale-pulse-out">
           <div></div>
@@ -107,24 +134,24 @@
         <button id="nirButton">False Color Veg</button>
         <button id="urbanButton">False Color Urban</button>
       </div>
-  
+
       <div>
-        <label>
+        <label style="color: red;">
           Red
           <select id="redBandSelect"></select>
         </label>
-  
-        <label>
+
+        <label style="color: green">
           Green
           <select id="greenBandSelect"></select>
         </label>
-  
-        <label>
+
+        <label style="color: blue">
           Blue
           <select id="blueBandSelect"></select>
         </label>
       </div>
-  
+
       <label>
         Chart Type
         <select id="chartTypeSelect">
@@ -135,7 +162,9 @@
         </select>
       </label>
     </div>
-  </div>
+  </main>
+
+  <footer>JavaScript remote sensing experiment built by <a href="https://twitter.com/jwasilgeo" target="_blank">Jacob Wasilkowski</a></footer>
 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://js.arcgis.com/4.14/"></script>

@@ -1,16 +1,17 @@
-var layer, view;
 require([
   'esri/Map',
   'esri/views/MapView',
   'esri/layers/ImageryLayer',
-  'esri/layers/support/RasterFunction'
+  'esri/layers/support/RasterFunction',
+  'esri/widgets/Search'
 ], function (
   Map,
   MapView,
   ImageryLayer,
-  RasterFunction
+  RasterFunction,
+  Search
 ) {
-  view = new MapView({
+  var view = new MapView({
     container: 'viewDiv',
     map: new Map({
       basemap: 'dark-gray-vector'
@@ -18,6 +19,12 @@ require([
     zoom: 7,
     center: [-122.5, 46.5]
   });
+
+  view.ui.add(new Search({
+    view: view,
+    popupEnabled: false,
+    resultGraphicEnabled: false
+  }), 'top-right');
 
   // Set the rendering rule to the 'None' raster function.
   // This will allow us to gain access to the raw values assigned to each pixel.
@@ -29,6 +36,8 @@ require([
   //   // }
   // });
 
+  // Set the rendering rule to a chained server-side raster function.
+  // Only 3 bands at a time are extracted and then they are stretched with standard deviation and DRA.
   function createExtractAndStretchRasterFunction(bandsRGB) {
     // https://developers.arcgis.com/documentation/common-data-types/raster-function-objects.htm#ESRI_SECTION1_7545363F0B8A4B7B931A54B3C4189D9D
     return new RasterFunction({
@@ -47,6 +56,8 @@ require([
     });
   }
 
+  // store the current pixel data after every extent change so that
+  // the charts can be changed without having to fetch the pixels again
   var pixelDataCurrent;
   function pixelFilter(pixelData) {
     if (
@@ -55,6 +66,8 @@ require([
       pixelData.pixelBlock.pixels === null
     ) {
       pixelDataCurrent = null;
+      displayCount(null, null);
+      Plotly.purge('chartDiv');
       return;
     }
 
@@ -62,46 +75,49 @@ require([
 
     var rgbaUint8ClampedArray = pixelData.pixelBlock.getAsRGBA();
 
-    var bandX = [];
-    var bandY = [];
-    var bandZ = [];
+    // loop through all the red, green, and blue pixel data
+    // and store each observation in data space x, y, and z arrays for plotly
+    // also create rgb() colors for plotly 3D charts
+    var dataX = [];
+    var dataY = [];
+    var dataZ = [];
     var colors = [];
     for (var index = 0; index < rgbaUint8ClampedArray.length; index += 4) {
       var r = rgbaUint8ClampedArray[index];
       var g = rgbaUint8ClampedArray[index + 1];
       var b = rgbaUint8ClampedArray[index + 2];
-      // var a = rgbaUint8ClampedArray[index + 3];
+      // var a = rgbaUint8ClampedArray[index + 3]; // if we ever needed the alpha
 
-      // if (r === 0 && g === 0 && b === 0) {
-      //   // bandX0.push(r);
-      //   // bandY0.push(g);
-      //   // bandZ0.push(b);
-      //   bandX.push(r);
-      //   bandY.push(g);
-      //   bandZ.push(b);
-      //   colors.push('rgb(' + r + ',' + g + ',' + b + ')');
-      // } else {
-      //   bandX.push(r);
-      //   bandY.push(g);
-      //   bandZ.push(b);
-      //   colors.push('rgb(' + r + ',' + g + ',' + b + ')');
-      // }
-
-      // TODO: reduce sheer number of total observations for non-histograms chart types
-      // - maybe only push once for the same R,G,B combo (turns out "if" + "colors.indexOf" is slow!)
-      // - maybe research a 3D binning technique
-
-      bandX.push(r);
-      bandY.push(g);
-      bandZ.push(b);
+      dataX.push(r);
+      dataY.push(g);
+      dataZ.push(b);
       colors.push('rgb(' + r + ',' + g + ',' + b + ')');
     }
 
-    updateChart(chartType, bandX, bandY, bandZ, colors);
+    displayCount(pixelData.pixelBlock.width, pixelData.pixelBlock.height);
+
+    updateChart(chartType, dataX, dataY, dataZ, colors);
   }
 
-  function updateChart(chartType, bandX, bandY, bandZ, colors) {
-    var chartInfo = getChartDataAndLayout(chartType, bandX, bandY, bandZ, colors);
+  function displayCount(w, h) {
+    if (!w || !h) {
+      document.querySelector('#countInfo').innerText = '';
+      return;
+    }
+
+    document.querySelector('#countInfo').innerText = [
+      'processed ',
+      (w * h),
+      ' pixels in the browser (',
+      w,
+      'w x ',
+      h,
+      'h)'
+    ].join('');
+  }
+
+  function updateChart(chartType, dataX, dataY, dataZ, colors) {
+    var chartInfo = getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors);
 
     Plotly.react(
       'chartDiv',
@@ -114,12 +130,12 @@ require([
     );
   }
 
-  function getChartDataAndLayout(chartType, bandX, bandY, bandZ, colors) {
+  function getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors) {
     // handle histograms chart type separately from 3D chart types
     if (chartType === 'histogram') {
       var data = [
         {
-          x: bandX,
+          x: dataX,
           type: 'histogram',
           name: 'Red (' + redBandSelectNode.options[redBandSelectNode.selectedIndex].text + ')',
           opacity: 0.55,
@@ -128,7 +144,7 @@ require([
           }
         },
         {
-          x: bandY,
+          x: dataY,
           type: 'histogram',
           name: 'Green (' + greenBandSelectNode.options[greenBandSelectNode.selectedIndex].text + ')',
           opacity: 0.55,
@@ -137,7 +153,7 @@ require([
           }
         },
         {
-          x: bandZ,
+          x: dataZ,
           type: 'histogram',
           name: 'Blue (' + blueBandSelectNode.options[blueBandSelectNode.selectedIndex].text + ')',
           opacity: 0.55,
@@ -179,9 +195,9 @@ require([
 
     // handle 3D chart types separately from histograms chart type
     var data = [{
-      x: bandX,
-      y: bandY,
-      z: bandZ,
+      x: dataX,
+      y: dataY,
+      z: dataZ,
       hovertemplate:
         [
           'Red (Band ' + redBandSelectNode.value + '): %{x}',
@@ -258,7 +274,7 @@ require([
   var initialGreenBand = 3;
   var initialBlueBand = 2;
 
-  layer = new ImageryLayer({
+  var layer = new ImageryLayer({
     url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat8_Views/ImageServer',
     // renderingRule: rasterFunctionNone,
     renderingRule: createExtractAndStretchRasterFunction([initialRedBand, initialGreenBand, initialBlueBand]),
@@ -267,8 +283,6 @@ require([
   });
 
   layer.when(function () {
-    // view.goTo(layer.fullExtent);
-
     for (var index = 0; index < layer.bandCount; index++) {
       var redOption = document.createElement('option');
       redOption.value = index;
