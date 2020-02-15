@@ -26,18 +26,14 @@ require([
     resultGraphicEnabled: false
   }), 'top-right');
 
-  // Set the rendering rule to the 'None' raster function.
-  // This will allow us to gain access to the raw values assigned to each pixel.
+  // set the rendering rule to the 'None' raster function
+  // this will allow us to gain access to the raw values assigned to each pixel
   // var rasterFunctionNone = new RasterFunction({
-  //   functionName: 'None',
-  //   // functionName: 'ExtractBand',
-  //   // functionArguments: {
-  //   //   'BandIDs': [0, 7, 14]
-  //   // }
+  //   functionName: 'None'
   // });
 
-  // Set the rendering rule to a chained server-side raster function.
-  // Only 3 bands at a time are extracted and then they are stretched with standard deviation and DRA.
+  // set the rendering rule to a chained server-side raster function
+  // only 3 bands at a time are extracted and then they are stretched with standard deviation and DRA.
   function createExtractAndStretchRasterFunction(bandsRGB) {
     // https://developers.arcgis.com/documentation/common-data-types/raster-function-objects.htm#ESRI_SECTION1_7545363F0B8A4B7B931A54B3C4189D9D
     return new RasterFunction({
@@ -75,13 +71,26 @@ require([
 
     var rgbaUint8ClampedArray = pixelData.pixelBlock.getAsRGBA();
 
+    var chartData;
+    if (chartType === 'histogram') {
+      chartData = processDataForHistograms(rgbaUint8ClampedArray);
+    } else {
+      chartData = processDataFor3DCharts(rgbaUint8ClampedArray);
+    }
+
+    displayCount(pixelData.pixelBlock.width, pixelData.pixelBlock.height);
+
+    updateChart(chartType, chartData.dataX, chartData.dataY, chartData.dataZ, chartData.colors);
+  }
+
+  function processDataForHistograms(rgbaUint8ClampedArray) {
     // loop through all the red, green, and blue pixel data
     // and store each observation in data space x, y, and z arrays for plotly
-    // also create rgb() colors for plotly 3D charts
+
     var dataX = [];
     var dataY = [];
     var dataZ = [];
-    var colors = [];
+
     for (var index = 0; index < rgbaUint8ClampedArray.length; index += 4) {
       var r = rgbaUint8ClampedArray[index];
       var g = rgbaUint8ClampedArray[index + 1];
@@ -91,12 +100,55 @@ require([
       dataX.push(r);
       dataY.push(g);
       dataZ.push(b);
-      colors.push('rgb(' + r + ',' + g + ',' + b + ')');
     }
 
-    displayCount(pixelData.pixelBlock.width, pixelData.pixelBlock.height);
+    return {
+      dataX: dataX,
+      dataY: dataY,
+      dataZ: dataZ,
+      colors: null // rgb() colors array only used by plotly 3D charts
+    };
+  }
 
-    updateChart(chartType, dataX, dataY, dataZ, colors);
+  function processDataFor3DCharts(rgbaUint8ClampedArray) {
+    // loop through all the red, green, and blue pixel data
+    // and store each observation in data space x, y, and z arrays for plotly
+    // also create rgb() colors for plotly 3D charts
+
+    // NOTE: a Set is used to efficiently capture only once each unique combination of red, green, and blue
+
+    var combinations = new Set();
+
+    for (var index = 0; index < rgbaUint8ClampedArray.length; index += 4) {
+      var r = rgbaUint8ClampedArray[index];
+      var g = rgbaUint8ClampedArray[index + 1];
+      var b = rgbaUint8ClampedArray[index + 2];
+      // var a = rgbaUint8ClampedArray[index + 3]; // if we ever needed the alpha
+
+      // a string representing the unique red, green, and blue combo will only be added once to the set
+      combinations.add(r + ',' + g + ',' + b);
+    }
+
+    // unpack the set into x, y, z, and colors arrays for plotly
+    var dataX = [];
+    var dataY = [];
+    var dataZ = [];
+    var colors = [];
+
+    combinations.forEach(function (v) {
+      var rgb = v.split(',');
+      dataX.push(rgb[0]);
+      dataY.push(rgb[1]);
+      dataZ.push(rgb[2]);
+      colors.push('rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')')
+    });
+
+    return {
+      dataX: dataX,
+      dataY: dataY,
+      dataZ: dataZ,
+      colors: colors
+    };
   }
 
   function displayCount(w, h) {
@@ -106,9 +158,9 @@ require([
     }
 
     document.querySelector('#countInfo').innerText = [
-      'processed ',
+      'charted ',
       (w * h),
-      ' pixels in the browser (',
+      ' pixel color values (',
       w,
       'w x ',
       h,
