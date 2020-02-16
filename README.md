@@ -16,7 +16,7 @@ Future goals:
 
 [![screenshot](https://raw.githubusercontent.com/jwasilgeo/pixels/master/charting/screenshot.png)](https://jwasilgeo.github.io/pixels/charting/)
 
-Warning ⚠️: this thing might break your mobile browser ¯\_(ツ)_/¯
+Warning ⚠️: this thing might break your mobile browser `¯\_(ツ)_/¯`
 
 ## draw-training-sites
 
