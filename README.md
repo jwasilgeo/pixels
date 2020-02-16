@@ -6,6 +6,8 @@ Mapping and charting pixels from remote sensing Earth observation data with Java
 
 Histograms and 3D scatterplots of R, G, B pixel values. Choose your own Landsat 8 band combinations to explore the data.
 
+Thanks to <https://github.com/Overv/ColorScatterPlot> for some helpful ideas when I was unsure how to assign colors my 3D scatterplot markers in Plotly.js.
+
 Future goals:
 
 - filter by time frame window
