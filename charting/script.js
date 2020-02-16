@@ -217,9 +217,15 @@ require([
 
       var layout = {
         barmode: 'overlay',
+        xaxis: {
+          range: [0, 255]
+        },
+        yaxis: {
+          title: 'frequency'
+        },
         margin: {
           t: 30,
-          r: 40,
+          r: 30,
           b: 30,
           l: 40
         },
@@ -288,9 +294,9 @@ require([
         aspectmode: 'cube',
         camera: {
           eye: {
-            x: -1.5,
-            y: 1.5,
-            z: 1.5
+            x: -1.6,
+            y: -1.6,
+            z: 0.75
           },
         },
         xaxis: {
@@ -299,7 +305,7 @@ require([
         },
         yaxis: {
           title: 'Green (' + greenBandSelectNode.options[greenBandSelectNode.selectedIndex].text + ')',
-          range: [255, 0]
+          range: [0, 255]
         },
         zaxis: {
           title: 'Blue (' + blueBandSelectNode.options[blueBandSelectNode.selectedIndex].text + ')',

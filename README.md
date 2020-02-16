@@ -1,3 +1,3 @@
 # pixels
 
-JavaScript and remote sensing pixel web mapping
+Mapping and charting pixels from remote sensing Earth observation data with JavaScript.
