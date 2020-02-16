@@ -5,7 +5,7 @@ require([
   'esri/layers/support/RasterFunction',
   'esri/widgets/Search'
 ], function (
-  Map,
+  EsriMap,
   MapView,
   ImageryLayer,
   RasterFunction,
@@ -13,7 +13,7 @@ require([
 ) {
   var view = new MapView({
     container: 'viewDiv',
-    map: new Map({
+    map: new EsriMap({
       basemap: 'dark-gray'
     }),
     zoom: 8,
