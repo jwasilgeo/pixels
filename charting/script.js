@@ -14,10 +14,10 @@ require([
   var view = new MapView({
     container: 'viewDiv',
     map: new Map({
-      basemap: 'dark-gray-vector'
+      basemap: 'dark-gray'
     }),
-    zoom: 7,
-    center: [-122.5, 46.5]
+    zoom: 8,
+    center: [-122, 46.5]
   });
 
   view.ui.add(new Search({
@@ -313,7 +313,9 @@ require([
         font: {
           family: '"Avenir Next W01", "Avenir Next W00", "Avenir Next", "Avenir", "Helvetica Neue", sans-serif'
         }
-      }
+      },
+
+      uirevision: 'true'
     };
 
     return {
