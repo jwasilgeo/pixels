@@ -14,6 +14,8 @@ Future goals:
 
 - filter by cloud cover
 
+[![screenshot](https://raw.githubusercontent.com/jwasilgeo/pixels/master/charting/screenshot.png)](https://jwasilgeo.github.io/pixels/charting/)
+
 ## draw-training-sites
 
 _(unfinished business / work in progress)_
