@@ -336,6 +336,8 @@ require([
     format: 'lerc'
   });
 
+  // create options for band select elements and wire up event listeners
+  // after the imagery layer has loaded and has info about its own bands
   layer.when(function () {
     for (var index = 0; index < layer.bandCount; index++) {
       var redOption = document.createElement('option');
@@ -364,7 +366,7 @@ require([
     greenBandSelectNode.selectedIndex = initialGreenBand;
     blueBandSelectNode.selectedIndex = initialBlueBand;
 
-    redBandSelectNode.addEventListener('input', function() {
+    redBandSelectNode.addEventListener('input', function () {
       layer.renderingRule = createExtractAndStretchRasterFunction(
         [
           Number(redBandSelectNode.value),
@@ -374,7 +376,7 @@ require([
       );
     });
 
-    greenBandSelectNode.addEventListener('input', function() {
+    greenBandSelectNode.addEventListener('input', function () {
       layer.renderingRule = createExtractAndStretchRasterFunction(
         [
           Number(redBandSelectNode.value),
@@ -384,7 +386,7 @@ require([
       );
     });
 
-    blueBandSelectNode.addEventListener('input', function() {
+    blueBandSelectNode.addEventListener('input', function () {
       layer.renderingRule = createExtractAndStretchRasterFunction(
         [
           Number(redBandSelectNode.value),
@@ -411,10 +413,12 @@ require([
       });
     });
 
+  // get references to the R G B band select elements
   var redBandSelectNode = document.querySelector('#redBandSelect');
   var greenBandSelectNode = document.querySelector('#greenBandSelect');
   var blueBandSelectNode = document.querySelector('#blueBandSelect');
 
+  // wire up event listeners for the band combo bookmarks buttons
   document.querySelector('#trueColorButton').addEventListener('click', function () {
     redBandSelectNode.selectedIndex = 3;
     greenBandSelectNode.selectedIndex = 2;
@@ -457,6 +461,7 @@ require([
     );
   });
 
+  // set default value and wire up event listener for chart type select
   var chartTypeSelectNode = document.querySelector('#chartTypeSelect');
   var chartType = chartTypeSelectNode.value;
   chartTypeSelectNode.addEventListener('input', function (evt) {

@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="author" content="Jacob Wasilkowski">
-  <title>Landsat 8 Pixels: Esri JSAPI and Plotly Charting</title>
+  <title>&#x1F941; Battle of the Bands &#x1F3B8;: Mapping and Charting Landsat 8 Pixels</title>
 
   <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
   <link rel="stylesheet" href="https://unpkg.com/loaders.css@0.1.2/loaders.min.css">
@@ -25,7 +25,8 @@
 
     h1 {
       text-align: center;
-      font-size: 25px;
+      font-size: 22px;
+      margin: 14px 3px;
     }
 
     select {
@@ -38,11 +39,11 @@
       font-size: 14px;
     }
 
-    main {
+    .main-flex {
       display: flex;
       justify-content: space-evenly;
       align-items: center;
-      height: calc(100vh - 64px - 30px);
+      height: calc(100vh - 60px - 40px);
       margin: 0 auto;
     }
 
@@ -58,9 +59,10 @@
     }
 
     #chartWrapper {
+      padding: 8px;
       width: 38%;
       max-width: 500px;
-      height: 100%;
+      height: calc(100% - 16px);
       max-height: 600px;
       outline: 1px solid steelblue;
 
@@ -100,23 +102,76 @@
       background-color: steelblue;
     }
 
+    .instructions {
+      font-size: 14px;
+      margin: 10px 8px;
+      text-align: center;
+    }
+
     footer {
-      text-align: right;
-      margin: 8px 15px 0 15px;
+      text-align: center;
+      margin: 10px 15px;
+      font-size: 15px;
+    }
+
+    @media screen and (max-width: 1100px) {
+      #viewDiv {
+        max-height: 618px;
+        width: 47%;
+      }
+
+      #chartWrapper {
+        width: 47%;
+      }
+    }
+
+    @media screen and (max-width: 992px) {
+      h1 {
+        font-size: 22px;
+      }
+
+      .main-flex {
+        flex-direction: column;
+        width: 85%;
+        height: unset;
+      }
+
+      #viewDiv {
+        height: 350px;
+        width: 100%;
+        max-width: unset;
+        margin-bottom: 20px;
+      }
+
+      #chartWrapper {
+        width: calc(100% - 16px);
+        max-width: unset;
+        text-align: center;
+      }
+
+      label,
+      button {
+        margin: 8px 5px;
+        display: inline-block;
+      }
+
+      .instructions {
+        margin: unset;
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>Landsat 8 Pixels: Esri JSAPI and Plotly Charting</h1>
+  <h1>&#x1F941; Battle of the Bands &#x1F3B7;: Mapping and Charting Landsat 8 Pixels</h1>
 
-  <main class="flex">
+  <main class="main-flex">
     <div id="viewDiv"></div>
 
     <div id="chartWrapper">
       <div id="chartDiv"></div>
 
-      <div id="countInfo"></div>
+      <p id="countInfo"></p>
 
       <div id="status">
         <div class="line-scale-pulse-out">
@@ -127,6 +182,11 @@
           <div></div>
         </div>
       </div>
+
+      <p class="instructions">
+        Select from a few common band combinations,<br>
+        or choose your own adventure.
+      </p>
 
       <div>
         <button id="trueColorButton">Natural Color</button>
@@ -163,7 +223,7 @@
     </div>
   </main>
 
-  <footer>JavaScript remote sensing experiment built by <a href="https://twitter.com/jwasilgeo" target="_blank">Jacob Wasilkowski</a></footer>
+  <footer>JavaScript remote sensing experiment built by <a href="https://twitter.com/jwasilgeo" target="_blank">Jacob Wasilkowski</a>, using the ArcGIS API for JavaScript and Plotly.js.</footer>
 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://js.arcgis.com/4.14/"></script>
