@@ -2,7 +2,9 @@
 
 Mapping and charting pixels from remote sensing Earth observation data with JavaScript.
 
-## charting
+## [charting](https://jwasilgeo.github.io/pixels/charting/)
+
+<https://jwasilgeo.github.io/pixels/charting/>
 
 Histograms and 3D scatterplots of R, G, B pixel values. Choose your own Landsat 8 band combinations to explore the data.
 
