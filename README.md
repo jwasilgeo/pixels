@@ -18,6 +18,13 @@ Future goals:
 
 - filter by cloud cover
 
+- add toggling ability to run in a "raw" mode, where:
+  
+  1. don't do DRA in the request
+
+	2. map and chart apparent reflectance raw values 0-10000 from landsat service
+
+
 Warning ⚠️: this thing might break your mobile browser `¯\_(ツ)_/¯`
 
 ## draw-training-sites
