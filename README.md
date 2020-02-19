@@ -12,6 +12,8 @@ Histograms and 3D scatterplots of R, G, B pixel values. Choose your own Landsat 
 
 Thanks to <https://github.com/Overv/ColorScatterPlot> for some helpful ideas when I was unsure how to assign colors my 3D scatterplot markers in Plotly.js.
 
+Warning ⚠️: this thing might break your mobile browser `¯\_(ツ)_/¯`
+
 Future goals:
 
 - filter by time frame window
@@ -19,13 +21,8 @@ Future goals:
 - filter by cloud cover
 
 - add toggling ability to run in a "raw" mode, where:
-  
   1. don't do DRA in the request
-
-	2. map and chart apparent reflectance raw values 0-10000 from landsat service
-
-
-Warning ⚠️: this thing might break your mobile browser `¯\_(ツ)_/¯`
+  2. map and chart apparent reflectance raw values 0-10000 from landsat service
 
 ## draw-training-sites
 
