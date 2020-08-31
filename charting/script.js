@@ -16,8 +16,19 @@ require([
     map: new EsriMap({
       basemap: 'dark-gray'
     }),
-    zoom: 8,
-    center: [-122, 46.5]
+    // Poland
+    // zoom: 6,
+    // center: [19.19, 51.82]
+    extent: {
+      xmax: 2916490,
+      xmin: 1355951,
+      ymax: 7623739,
+      ymin: 5911549,
+      spatialReference: {
+        latestWkid: 3857,
+        wkid: 102100
+      }
+    }
   });
 
   view.ui.add(new Search({
@@ -54,22 +65,18 @@ require([
 
   // store the current pixel data after every extent change so that
   // the charts can be changed without having to fetch the pixels again
-  var pixelDataCurrent;
-  function pixelFilter(pixelData) {
-    if (
-      pixelData === null ||
-      pixelData.pixelBlock === null ||
-      pixelData.pixelBlock.pixels === null
-    ) {
-      pixelDataCurrent = null;
+  var pixelBlockCurrent;
+  function processPixelBlock(pixelBlock) {
+    if (!pixelBlock || !pixelBlock.pixels) {
+      pixelBlockCurrent = null;
       displayCount(null, null);
       Plotly.purge('chartDiv');
       return;
     }
 
-    pixelDataCurrent = pixelData;
+    pixelBlockCurrent = pixelBlock;
 
-    var rgbaUint8ClampedArray = pixelData.pixelBlock.getAsRGBA();
+    var rgbaUint8ClampedArray = pixelBlock.getAsRGBA();
 
     var chartData;
     if (chartType === 'histogram') {
@@ -78,7 +85,7 @@ require([
       chartData = processDataFor3DCharts(rgbaUint8ClampedArray);
     }
 
-    displayCount(pixelData.pixelBlock.width, pixelData.pixelBlock.height);
+    displayCount(pixelBlock.width, pixelBlock.height);
 
     updateChart(chartType, chartData.dataX, chartData.dataY, chartData.dataZ, chartData.colors);
   }
@@ -338,7 +345,7 @@ require([
     url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat8_Views/ImageServer',
     // renderingRule: rasterFunctionNone,
     renderingRule: createExtractAndStretchRasterFunction([initialRedBand, initialGreenBand, initialBlueBand]),
-    pixelFilter: pixelFilter,
+    // pixelFilter: processPixelBlock,
     format: 'lerc'
   });
 
@@ -410,6 +417,10 @@ require([
   view
     .whenLayerView(layer)
     .then(function (layerView) {
+      layerView.watch('pixelData.pixelBlock', function (pixelBlock) {
+        processPixelBlock(pixelBlock);
+      });
+
       layerView.watch('updating', function (updating) {
         if (updating) {
           statusNode.style.opacity = 1;
@@ -472,6 +483,6 @@ require([
   var chartType = chartTypeSelectNode.value;
   chartTypeSelectNode.addEventListener('input', function (evt) {
     chartType = evt.target.value;
-    pixelFilter(pixelDataCurrent);
+    processPixelBlock(pixelBlockCurrent);
   });
 });
