@@ -7,8 +7,9 @@
   <meta name="author" content="Jacob Wasilkowski">
   <title>&#x1F941; Battle of the Bands &#x1F3B8;: Mapping and Charting Landsat 8 Pixels</title>
 
-  <link rel="stylesheet" href="https://js.arcgis.com/4.17/esri/css/main.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.20/esri/css/main.css">
   <link rel="stylesheet" href="https://unpkg.com/loaders.css@0.1.2/loaders.min.css">
+  <link rel="stylesheet" href="https://api.fontshare.com/css?f[]=array@0&display=swap">
 
   <style>
     html,
@@ -25,8 +26,9 @@
 
     h1 {
       text-align: center;
-      font-size: 22px;
+      font-size: 40px;
       margin: 14px 3px;
+      font-family: "Array", sans-serif;
     }
 
     select {
@@ -43,7 +45,7 @@
       display: flex;
       justify-content: space-evenly;
       align-items: center;
-      height: calc(100vh - 60px - 40px);
+      height: calc(100vh - 140px - 50px);
       margin: 0 auto;
     }
 
@@ -104,6 +106,7 @@
 
     .instructions {
       font-size: 14px;
+      font-weight: bold;
       margin: 4px 0;
       text-align: center;
       width: 70%;
@@ -164,7 +167,7 @@
 </head>
 
 <body>
-  <h1>&#x1F941; Battle of the Bands &#x1F3B7;: Mapping and Charting Landsat 8 Pixels</h1>
+  <h1>&#x1F941; Battle of the Bands &#x1F3B7;:<br>Mapping and Charting Landsat 8 Pixels</h1>
 
   <main class="main-flex">
     <div id="viewDiv"></div>
@@ -193,23 +196,23 @@
       </div>
 
       <div>
-        <label style="color: red;">
+        <label style="color: red; font-weight: bold;">
           Red
           <select id="redBandSelect"></select>
         </label>
 
-        <label style="color: green">
+        <label style="color: green; font-weight: bold;">
           Green
           <select id="greenBandSelect"></select>
         </label>
 
-        <label style="color: blue">
+        <label style="color: blue; font-weight: bold;">
           Blue
           <select id="blueBandSelect"></select>
         </label>
       </div>
 
-      <label>
+      <label style="font-weight: bold;">
         Chart Type
         <select id="chartTypeSelect">
           <option value="histogram">Histograms</option>
@@ -221,10 +224,10 @@
     </div>
   </main>
 
-  <footer>JavaScript remote sensing experiment built by <a href="https://twitter.com/jwasilgeo" target="_blank">Jacob Wasilkowski</a>, using the ArcGIS API for JavaScript and Plotly.js.</footer>
+  <footer>JavaScript remote sensing experiment built by <a href="https://twitter.com/jwasilgeo" target="_blank" style="font-weight: bold; font-size: 1.1rem;">Jacob Wasilkowski</a>, using the <a href="https://js.arcgis.com" target="_blank">ArcGIS API for JavaScript</a> and <a href="https://plotly.com/javascript/" target="_blank">Plotly.js.</a><br>Header font by the <a href="https://www.fontshare.com/fonts/array" target="_blank">Indian Type Foundry</a>.</footer>
 
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://js.arcgis.com/4.17/"></script>
+  <script src="https://cdn.plot.ly/plotly-2.4.2.min.js"></script>
+  <script src="https://js.arcgis.com/4.20/"></script>
   <script src="script.js"></script>
 </body>
 

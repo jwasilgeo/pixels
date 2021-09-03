@@ -1,21 +1,23 @@
 require([
-  'esri/Map',
   'esri/views/MapView',
   'esri/layers/ImageryLayer',
   'esri/layers/support/RasterFunction',
-  'esri/widgets/Search'
+  'esri/layers/support/TileInfo',
+  'esri/layers/FeatureLayer',
+  'esri/widgets/Search',
 ], function (
-  EsriMap,
   MapView,
   ImageryLayer,
   RasterFunction,
+  TileInfo,
+  FeatureLayer,
   Search
 ) {
   var view = new MapView({
     container: 'viewDiv',
-    map: new EsriMap({
-      basemap: 'dark-gray'
-    }),
+    map: {
+      // basemap: 'dark-gray'
+    },
     // Poland
     // zoom: 6,
     // center: [19.19, 51.82]
@@ -28,6 +30,12 @@ require([
         latestWkid: 3857,
         wkid: 102100
       }
+    },
+    constraints: {
+      minZoom: 2,
+      // without a basemap no LODs are automatically set for us,
+      // specify AGOL LODs for the view
+      lods: TileInfo.create().lods
     }
   });
 
@@ -70,7 +78,7 @@ require([
     if (!pixelBlock || !pixelBlock.pixels) {
       pixelBlockCurrent = null;
       displayCount(null, null);
-      Plotly.purge('chartDiv');
+      // Plotly.purge('chartDiv');
       return;
     }
 
@@ -411,6 +419,20 @@ require([
   });
 
   view.map.add(layer);
+  view.map.add(new FeatureLayer({
+    url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Countries_(Generalized)/FeatureServer/0',
+    renderer: {
+      type: 'simple',
+      symbol: {
+        type: 'simple-fill',
+        color: 'transparent',
+        outline: {
+          width: 0.75,
+          color: 'magenta'
+        }
+      }
+    }
+  }));
 
   // toggle visibility of the loading indicator when the imagery layerview is updating
   var statusNode = document.querySelector('#status');
