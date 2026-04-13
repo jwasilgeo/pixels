@@ -89,13 +89,13 @@ require([
     var chartData;
     if (chartType === 'histogram') {
       chartData = processDataForHistograms(rgbaUint8ClampedArray);
+      displayCount(pixelBlock.width, pixelBlock.height);
     } else {
       chartData = processDataFor3DCharts(rgbaUint8ClampedArray);
+      displayCount(pixelBlock.width, pixelBlock.height, chartData.counts.length);
     }
 
-    displayCount(pixelBlock.width, pixelBlock.height);
-
-    updateChart(chartType, chartData.dataX, chartData.dataY, chartData.dataZ, chartData.colors);
+    updateChart(chartType, chartData.dataX, chartData.dataY, chartData.dataZ, chartData.colors, chartData.counts);
   }
 
   function processDataForHistograms(rgbaUint8ClampedArray) {
@@ -125,14 +125,44 @@ require([
     };
   }
 
+  function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+    var h = 0, s = max === 0 ? 0 : delta / max, v = max;
+    if (delta !== 0) {
+      if (max === r)      h = ((g - b) / delta) % 6;
+      else if (max === g) h = (b - r) / delta + 2;
+      else                h = (r - g) / delta + 4;
+      h = ((h * 60) + 360) % 360;
+    }
+    // return H in 0-360, S and V scaled to 0-255 to match RGB range for binning
+    return { x: h, y: s * 255, z: v * 255 };
+  }
+
+  function rgbToLab(r, g, b) {
+    // sRGB -> linear RGB
+    function linearize(c) {
+      c /= 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    var lr = linearize(r), lg = linearize(g), lb = linearize(b);
+    // linear RGB -> XYZ (D65 illuminant)
+    var x = (lr * 0.4124564 + lg * 0.3575761 + lb * 0.1804375) / 0.95047;
+    var y = (lr * 0.2126729 + lg * 0.7151522 + lb * 0.0721750);
+    var z = (lr * 0.0193339 + lg * 0.1191920 + lb * 0.9503041) / 1.08883;
+    // XYZ -> Lab
+    function f(t) { return t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116; }
+    return { x: 116 * f(y) - 16, y: 500 * (f(x) - f(y)), z: 200 * (f(y) - f(z)) };
+  }
+
   function processDataFor3DCharts(rgbaUint8ClampedArray) {
-    // loop through all the red, green, and blue pixel data
-    // and store each observation in data space x, y, and z arrays for plotly
-    // also create rgb() colors for plotly 3D charts
+    // convert each pixel to the target color space, then bin by quantized channel values.
+    // bins accumulate the sum of axis values and raw RGB so we can display true per-bin
+    // averages rather than synthetic bin-center coordinates or colors.
+    // channel values are normalized to 0-255 before binning so binSize has consistent
+    // meaning across all color spaces.
 
-    // NOTE: a Set is used to efficiently capture only once each unique combination of red, green, and blue
-
-    var combinations = new Set();
+    var bins = new Map();
 
     for (var index = 0; index < rgbaUint8ClampedArray.length; index += 4) {
       var r = rgbaUint8ClampedArray[index];
@@ -140,51 +170,101 @@ require([
       var b = rgbaUint8ClampedArray[index + 2];
       // var a = rgbaUint8ClampedArray[index + 3]; // if we ever needed the alpha
 
-      // a string representing the unique red, green, and blue combo will only be added once to the set
-      combinations.add(r + ',' + g + ',' + b);
+      var cv = colorSpace === 'hsv' ? rgbToHsv(r, g, b)
+             : colorSpace === 'lab' ? rgbToLab(r, g, b)
+             : { x: r, y: g, z: b };
+
+      // normalize each channel to 0-255 for consistent bin key computation
+      var nx = colorSpace === 'hsv' ? cv.x / 360 * 255
+             : colorSpace === 'lab' ? cv.x / 100 * 255   // L: 0-100
+             : cv.x;
+      var ny = colorSpace === 'lab' ? cv.y + 128 : cv.y; // a: -128 to 127
+      var nz = colorSpace === 'lab' ? cv.z + 128 : cv.z; // b: -128 to 127
+
+      var key = (Math.floor(nx / binSize) << 16) | (Math.floor(ny / binSize) << 8) | Math.floor(nz / binSize);
+
+      var bin = bins.get(key);
+      if (bin) {
+        bin.count++;
+        bin.sumX += cv.x; bin.sumY += cv.y; bin.sumZ += cv.z;
+        bin.sumR += r;    bin.sumG += g;    bin.sumB += b;
+      } else {
+        bins.set(key, { count: 1, sumX: cv.x, sumY: cv.y, sumZ: cv.z, sumR: r, sumG: g, sumB: b });
+      }
     }
 
-    // unpack the set into x, y, z, and colors arrays for plotly
-    var dataX = [];
-    var dataY = [];
-    var dataZ = [];
-    var colors = [];
+    // unpack bins into plotly arrays. axis values are the true average of pixels in each
+    // bin; marker color is the average RGB regardless of which color space is active.
+    var dataX = [], dataY = [], dataZ = [], colors = [], pixelCounts = [];
 
-    combinations.forEach(function (v) {
-      var rgb = v.split(',');
-      dataX.push(rgb[0]);
-      dataY.push(rgb[1]);
-      dataZ.push(rgb[2]);
-      colors.push('rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')')
+    bins.forEach(function (bin) {
+      var avgR = Math.round(bin.sumR / bin.count);
+      var avgG = Math.round(bin.sumG / bin.count);
+      var avgB = Math.round(bin.sumB / bin.count);
+
+      dataX.push(bin.sumX / bin.count);
+      dataY.push(bin.sumY / bin.count);
+      dataZ.push(bin.sumZ / bin.count);
+      colors.push('rgb(' + avgR + ',' + avgG + ',' + avgB + ')');
+      pixelCounts.push(bin.count);
     });
 
-    return {
-      dataX: dataX,
-      dataY: dataY,
-      dataZ: dataZ,
-      colors: colors
-    };
+    return { dataX: dataX, dataY: dataY, dataZ: dataZ, colors: colors, counts: pixelCounts };
   }
 
-  function displayCount(w, h) {
+  function getAxisConfig() {
+    if (colorSpace === 'hsv') {
+      return [
+        { title: 'Hue',        range: [0, 360] },
+        { title: 'Saturation', range: [0, 255] },
+        { title: 'Value',      range: [0, 255] }
+      ];
+    }
+    if (colorSpace === 'lab') {
+      return [
+        { title: 'L* (Lightness)',        range: [0, 100]    },
+        { title: 'a* (green \u2192 red)', range: [-128, 127] },
+        { title: 'b* (blue \u2192 yellow)', range: [-128, 127] }
+      ];
+    }
+    return [
+      { title: 'Red ('   + redBandSelectNode.options[redBandSelectNode.selectedIndex].text   + ')', range: [0, 255] },
+      { title: 'Green (' + greenBandSelectNode.options[greenBandSelectNode.selectedIndex].text + ')', range: [0, 255] },
+      { title: 'Blue ('  + blueBandSelectNode.options[blueBandSelectNode.selectedIndex].text  + ')', range: [0, 255] }
+    ];
+  }
+
+  function getHoverLabels() {
+    if (colorSpace === 'hsv') {
+      return ['Hue: %{x:.1f}\xb0', 'Saturation: %{y:.0f}', 'Value: %{z:.0f}'];
+    }
+    if (colorSpace === 'lab') {
+      return ['L*: %{x:.1f}', 'a*: %{y:.1f}', 'b*: %{z:.1f}'];
+    }
+    return [
+      'Red (Band '   + redBandSelectNode.value   + '): %{x}',
+      'Green (Band ' + greenBandSelectNode.value + '): %{y}',
+      'Blue (Band '  + blueBandSelectNode.value  + '): %{z}'
+    ];
+  }
+
+  function displayCount(w, h, binCount) {
     if (!w || !h) {
       document.querySelector('#countInfo').innerText = '';
       return;
     }
 
-    document.querySelector('#countInfo').innerText = [
-      'charted ',
-      (w * h),
-      ' pixel color values (',
-      w,
-      'w x ',
-      h,
-      'h)'
-    ].join('');
+    var text = 'charted ' + (w * h).toLocaleString() + ' pixel color values (' + w + 'w x ' + h + 'h)';
+
+    if (binCount !== undefined) {
+      text += ' \u2192 ' + binCount.toLocaleString() + ' unique bins';
+    }
+
+    document.querySelector('#countInfo').innerText = text;
   }
 
-  function updateChart(chartType, dataX, dataY, dataZ, colors) {
-    var chartInfo = getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors);
+  function updateChart(chartType, dataX, dataY, dataZ, colors, counts) {
+    var chartInfo = getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors, counts);
 
     Plotly.react(
       'chartDiv',
@@ -197,7 +277,7 @@ require([
     );
   }
 
-  function getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors) {
+  function getChartDataAndLayout(chartType, dataX, dataY, dataZ, colors, counts) {
     // handle histograms chart type separately from 3D chart types
     if (chartType === 'histogram') {
       var data = [
@@ -267,26 +347,30 @@ require([
     }
 
     // handle 3D chart types separately from histograms chart type
+    var hoverLabels = getHoverLabels();
     var data = [{
       x: dataX,
       y: dataY,
       z: dataZ,
-      hovertemplate:
-        [
-          'Red (Band ' + redBandSelectNode.value + '): %{x}',
-          'Green (Band ' + greenBandSelectNode.value + '): %{y}',
-          'Blue (Band ' + blueBandSelectNode.value + '): %{z}',
-          '<extra></extra>' // hide the secondary "trace 0" box
-        ].join('<br>'),
+      customdata: counts,
+      hovertemplate: hoverLabels.concat(['Pixels in bin: %{customdata:,}', '<extra></extra>']).join('<br>'),
     }];
 
     if (chartType === 'scatter3d') {
+      // scale marker size logarithmically so dominant bins stand out without
+      // overwhelming the view — rare colors still appear as small but visible dots
+      var markerSizes = counts.map(function (count) {
+        return Math.max(3, Math.log1p(count) * 2);
+      });
+
       data[0].type = 'scatter3d';
       data[0].mode = 'markers';
       data[0].marker = {
-        symbol: 'circle',
+        symbol: 'square',
         color: colors,
-        size: 3
+        size: markerSizes,
+        sizemode: 'diameter',
+        line: { width: 0 }
       };
     } else if (chartType === 'mesh3d-delaunay') {
       data[0].type = 'mesh3d';
@@ -314,18 +398,9 @@ require([
             z: 0.75
           },
         },
-        xaxis: {
-          title: 'Red (' + redBandSelectNode.options[redBandSelectNode.selectedIndex].text + ')',
-          range: [0, 255]
-        },
-        yaxis: {
-          title: 'Green (' + greenBandSelectNode.options[greenBandSelectNode.selectedIndex].text + ')',
-          range: [0, 255]
-        },
-        zaxis: {
-          title: 'Blue (' + blueBandSelectNode.options[blueBandSelectNode.selectedIndex].text + ')',
-          range: [0, 255]
-        }
+        xaxis: getAxisConfig()[0],
+        yaxis: getAxisConfig()[1],
+        zaxis: getAxisConfig()[2]
       },
       font: {
         family: '"Avenir Next W01", "Avenir Next W00", "Avenir Next", "Avenir", "Helvetica Neue", sans-serif'
@@ -503,8 +578,41 @@ require([
   // set default value and wire up event listener for chart type select
   var chartTypeSelectNode = document.querySelector('#chartTypeSelect');
   var chartType = chartTypeSelectNode.value;
+  var binSizeControlNode = document.querySelector('#binSizeControl');
+  var colorSpaceControlNode = document.querySelector('#colorSpaceControl');
+
+  function updateControlStates() {
+    var disabled = chartType === 'histogram';
+    binSizeSelectNode.disabled = disabled;
+    binSizeControlNode.style.opacity = disabled ? 0.4 : 1;
+    colorSpaceSelectNode.disabled = disabled;
+    colorSpaceControlNode.style.opacity = disabled ? 0.4 : 1;
+  }
+
   chartTypeSelectNode.addEventListener('input', function (evt) {
     chartType = evt.target.value;
+    updateControlStates();
     processPixelBlock(pixelBlockCurrent);
   });
+
+  // set default value and wire up event listener for bin size select.
+  // binSize controls 3D voxel quantization: 1 = exact RGB triplets, larger values
+  // merge nearby colors into coarser bins and reduce the total number of plotted points.
+  var binSizeSelectNode = document.querySelector('#binSizeSelect');
+  var binSizeValueNode = document.querySelector('#binSizeValue');
+  var binSize = Number(binSizeSelectNode.value);
+  binSizeSelectNode.addEventListener('input', function (evt) {
+    binSize = Number(evt.target.value);
+    binSizeValueNode.innerText = binSize;
+    processPixelBlock(pixelBlockCurrent);
+  });
+
+  var colorSpaceSelectNode = document.querySelector('#colorSpaceSelect');
+  var colorSpace = colorSpaceSelectNode.value;
+  colorSpaceSelectNode.addEventListener('input', function (evt) {
+    colorSpace = evt.target.value;
+    processPixelBlock(pixelBlockCurrent);
+  });
+
+  updateControlStates();
 });
