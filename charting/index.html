@@ -64,7 +64,6 @@
     #chartWrapper {
       padding: 8px;
       width: 38%;
-      max-width: 500px;
       height: calc(100% - 16px);
       max-height: 600px;
       outline: 1px solid steelblue;
@@ -105,18 +104,21 @@
       background-color: steelblue;
     }
 
-    .instructions {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 4px 0;
-      text-align: center;
-      width: 70%;
-    }
-
     footer {
       text-align: center;
       margin: 10px 15px;
       font-size: 15px;
+    }
+
+    @media screen and (min-width: 1101px) {
+      #chartWrapper {
+        max-height: none;
+      }
+
+      #chartDiv {
+        flex: 1;
+        min-height: 425px;
+      }
     }
 
     @media screen and (max-width: 1100px) {
@@ -159,10 +161,6 @@
         margin: 8px 5px;
         display: inline-block;
       }
-
-      .instructions {
-        width: 100%;
-      }
     }
   </style>
 </head>
@@ -188,8 +186,6 @@
         </div>
       </div>
 
-      <p class="instructions">Select from a few common band combinations or choose your own adventure.</p>
-
       <div>
         <button id="trueColorButton">Natural Color</button>
         <button id="nirButton">False Color Veg</button>
@@ -213,14 +209,30 @@
         </label>
       </div>
 
-      <label style="font-weight: bold;">
-        Chart Type
-        <select id="chartTypeSelect">
-          <option value="histogram">Histograms</option>
-          <option value="scatter3d" selected>3D Scatterplot</option>
-          <option value="mesh3d-delaunay">3D Mesh (Delaunay Triangulation)</option>
-          <option value="mesh3d-convex">3D Mesh (Convex-hull)</option>
-        </select>
+      <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 16px;">
+        <label style="font-weight: bold;">
+          Chart Type
+          <select id="chartTypeSelect">
+            <option value="histogram">Histograms</option>
+            <option value="scatter3d" selected>3D Scatterplot</option>
+            <option value="mesh3d-delaunay">3D Mesh (Delaunay Triangulation)</option>
+            <option value="mesh3d-convex">3D Mesh (Convex-hull)</option>
+          </select>
+        </label>
+
+        <label id="colorSpaceControl" style="font-weight: bold;" title="Color space used for 3D axis layout and binning. Has no effect on histograms.">
+          Color Space
+          <select id="colorSpaceSelect">
+            <option value="rgb" selected>RGB</option>
+            <option value="hsv">HSV</option>
+            <option value="lab">CIELAB</option>
+          </select>
+        </label>
+      </div>
+
+      <label id="binSizeControl" style="font-weight: bold; display: flex; align-items: center; gap: 6px;" title="Controls 3D voxel bin size. Larger values merge nearby colors into fewer bins, reducing noise and point count. Has no effect on histograms.">
+        <span>Bin Size: <span id="binSizeValue">1</span></span>
+        <input type="range" id="binSizeSelect" min="1" max="32" step="1" value="1" style="margin: 0;">
       </label>
     </div>
   </main>
